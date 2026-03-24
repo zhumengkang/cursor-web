@@ -21,7 +21,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     auth::auth_middleware,
-    routes::{config as config_routes, logs as logs_routes, sse as sse_routes},
+    routes::{config as config_routes, logs as logs_routes, models as models_routes, sse as sse_routes},
     state::{AppState, ServerConfig},
 };
 
@@ -56,6 +56,7 @@ async fn main() {
 
     // 需要鉴权的 API 路由
     let api_routes = Router::new()
+        .route("/api/models", get(models_routes::get_models))
         .route("/api/config", get(config_routes::get_config).post(config_routes::post_config))
         .route("/api/logs", get(logs_routes::get_logs))
         .route("/api/logs/clear", post(logs_routes::clear_logs))
