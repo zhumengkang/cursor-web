@@ -128,12 +128,12 @@ async fn main() {
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", port);
-    tracing::info!("cursor2api-rust 启动，监听 http://{}", addr);
+    tracing::info!("kkproxy 启动，监听 http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
 async fn health() -> axum::Json<serde_json::Value> {
-    axum::Json(serde_json::json!({ "status": "ok", "service": "cursor2api-rust" }))
+    axum::Json(serde_json::json!({ "status": "ok", "service": "kkproxy" }))
 }
