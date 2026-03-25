@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod logger;
 mod node_service;
+mod proxy;
 mod routes;
 mod state;
 mod types;
@@ -12,7 +13,7 @@ use axum::{
     http::{header, StatusCode},
     middleware,
     response::Response,
-    routing::{get, post, put},
+    routing::{any, get, post, put},
     Router,
 };
 use rust_embed::RustEmbed;
@@ -148,6 +149,8 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(health))
         .merge(api_routes)
+        // /v1/* 反向代理到 Node.js cursor2api
+        .route("/v1/{*path}", any(proxy::proxy_v1))
         // 静态文件（嵌入到 exe 内）
         .route("/", get(|| serve_embedded(None)))
         .route("/*path", get(|p: Path<String>| serve_embedded(Some(p))))
