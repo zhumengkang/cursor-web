@@ -42,8 +42,10 @@ export function getNextProxyUrl(): string | undefined {
     const config = getConfig();
     // 优先使用 proxies 列表（多节点轮询）
     if (config.proxies && config.proxies.length > 0) {
-        const url = config.proxies[proxyPoolIndex % config.proxies.length];
+        const idx = proxyPoolIndex % config.proxies.length;
+        const url = config.proxies[idx];
         proxyPoolIndex++;
+        console.log(`[Proxy] 轮询代理 [${idx + 1}/${config.proxies.length}]: ${url}`);
         return url;
     }
     // 回退到单 proxy
