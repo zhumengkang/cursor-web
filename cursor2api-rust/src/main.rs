@@ -150,7 +150,7 @@ async fn main() {
         .route("/health", get(health))
         .merge(api_routes)
         // /v1/* 反向代理到 Node.js cursor2api
-        .route("/v1/{*path}", any(proxy::proxy_v1))
+        .route("/v1/*path", any(proxy::proxy_v1))
         // 静态文件（嵌入到 exe 内）
         .route("/", get(|| serve_embedded(None)))
         .route("/*path", get(|p: Path<String>| serve_embedded(Some(p))))
