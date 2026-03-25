@@ -11,6 +11,7 @@ jobs:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -97,14 +98,9 @@ jobs:
       - name: Pack node_bundle (Windows)
         if: matrix.os == 'windows-latest'
         working-directory: cursor2api
-        shell: pwsh
+        shell: bash
         run: |
-          # Windows 用 tar（Git for Windows 自带）
-          tar czf ../cursor2api-rust/node_bundle.tar.gz `
-            node.exe `
-            dist/ `
-            node_modules/ `
-            package.json
+          tar czf ../cursor2api-rust/node_bundle.tar.gz node.exe dist/ node_modules/ package.json
 
       - name: Build kkproxy
         working-directory: cursor2api-rust
