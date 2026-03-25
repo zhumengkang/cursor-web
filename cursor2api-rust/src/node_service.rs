@@ -100,9 +100,9 @@ pub fn setup_and_spawn(exe_dir: &Path) -> Option<Child> {
     let child = Command::new(&node_bin)
         .arg(&dist_js)
         .env("PORT", "3010")
-        .env("CONFIG_PATH", &config_path)
-        .env("DB_PATH", &db_path)
         .env("LOG_DIR", &log_dir)
+        .env("LOG_DB_ENABLED", "true")
+        .env("LOG_DB_PATH", &db_path)
         .current_dir(exe_dir)
         .spawn()
         .expect("启动 cursor2api 失败");
