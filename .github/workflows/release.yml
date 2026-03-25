@@ -16,12 +16,21 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact: kkproxy-linux-x86_64
+            node_platform: linux-x64
+            node_archive_ext: tar.gz
+            node_bin_path: bin/node
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: kkproxy-macos-arm64
+            node_platform: darwin-arm64
+            node_archive_ext: tar.gz
+            node_bin_path: bin/node
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact: kkproxy-windows-x86_64
+            node_platform: win-x64
+            node_archive_ext: zip
+            node_bin_path: node.exe
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +45,68 @@ jobs:
         with:
           workspaces: cursor2api-rust
 
-      - name: Build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build cursor2api
+        working-directory: cursor2api
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install production dependencies
+        working-directory: cursor2api
+        run: npm ci --omit=dev
+
+      - name: Download Node.js binary (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          NODE_VERSION="22.14.0"
+          PLATFORM="${{ matrix.node_platform }}"
+          ARCHIVE="node-v${NODE_VERSION}-${PLATFORM}.tar.gz"
+          curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${ARCHIVE}" -o node_archive.tar.gz
+          tar xzf node_archive.tar.gz
+          cp "node-v${NODE_VERSION}-${PLATFORM}/${{ matrix.node_bin_path }}" cursor2api/node
+          rm -rf "node-v${NODE_VERSION}-${PLATFORM}" node_archive.tar.gz
+
+      - name: Download Node.js binary (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $NODE_VERSION = "22.14.0"
+          $PLATFORM = "${{ matrix.node_platform }}"
+          $ARCHIVE = "node-v${NODE_VERSION}-${PLATFORM}.zip"
+          Invoke-WebRequest -Uri "https://nodejs.org/dist/v${NODE_VERSION}/${ARCHIVE}" -OutFile node_archive.zip
+          Expand-Archive -Path node_archive.zip -DestinationPath node_extracted
+          Copy-Item "node_extracted/node-v${NODE_VERSION}-${PLATFORM}/node.exe" -Destination "cursor2api/node.exe"
+          Remove-Item -Recurse -Force node_extracted, node_archive.zip
+
+      - name: Pack node_bundle (Unix)
+        if: matrix.os != 'windows-latest'
+        working-directory: cursor2api
+        run: |
+          tar czf ../cursor2api-rust/node_bundle.tar.gz \
+            node \
+            dist/ \
+            node_modules/ \
+            package.json
+
+      - name: Pack node_bundle (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: cursor2api
+        shell: pwsh
+        run: |
+          # Windows 用 tar（Git for Windows 自带）
+          tar czf ../cursor2api-rust/node_bundle.tar.gz `
+            node.exe `
+            dist/ `
+            node_modules/ `
+            package.json
+
+      - name: Build kkproxy
         working-directory: cursor2api-rust
         run: cargo build --release --target ${{ matrix.target }}
 

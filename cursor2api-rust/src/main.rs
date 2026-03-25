@@ -1,6 +1,7 @@
 mod auth;
 mod config;
 mod logger;
+mod node_service;
 mod routes;
 mod state;
 mod types;
@@ -78,6 +79,18 @@ async fn main() {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    // 获取 exe 所在目录，启动内嵌的 cursor2api Node.js 服务
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    let _node_child = node_service::setup_and_spawn(&exe_dir);
+
+    // 等待 Node.js 启动
+    if _node_child.is_some() {
+        tokio::time::sleep(tokio::time::Duration::from_millis(1500)).await;
+    }
 
     let server_config = ServerConfig::from_env();
     let port = server_config.port;

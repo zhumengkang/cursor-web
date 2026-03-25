@@ -23,3 +23,5 @@ tokio-util = "0.7"
 reqwest = { version = "0.12", features = ["socks"] }
 rust-embed = { version = "8", features = ["axum"] }
 mime_guess = "2"
+flate2 = "1"
+tar = "0.4"

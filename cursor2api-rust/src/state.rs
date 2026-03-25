@@ -12,14 +12,21 @@ pub struct ServerConfig {
 
 impl ServerConfig {
     pub fn from_env() -> Self {
+        // 默认路径相对于 exe 所在目录（生产模式）
+        // 开发时可通过环境变量覆盖
+        let exe_dir = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.to_path_buf()))
+            .unwrap_or_else(|| std::path::PathBuf::from("."));
+
         let config_path = std::env::var("CONFIG_PATH")
-            .unwrap_or_else(|_| "../cursor2api/config.yaml".to_string());
+            .unwrap_or_else(|_| exe_dir.join("config.yaml").to_string_lossy().to_string());
         let db_path = std::env::var("DB_PATH")
-            .unwrap_or_else(|_| "../cursor2api/logs/cursor2api.db".to_string());
+            .unwrap_or_else(|_| exe_dir.join("logs").join("cursor2api.db").to_string_lossy().to_string());
         let log_dir = std::env::var("LOG_DIR")
-            .unwrap_or_else(|_| "../cursor2api/logs".to_string());
+            .unwrap_or_else(|_| exe_dir.join("logs").to_string_lossy().to_string());
         let keys_db_path = std::env::var("KEYS_DB_PATH")
-            .unwrap_or_else(|_| "./keys.db".to_string());
+            .unwrap_or_else(|_| exe_dir.join("keys.db").to_string_lossy().to_string());
         let port = std::env::var("PORT")
             .ok()
             .and_then(|p| p.parse().ok())
