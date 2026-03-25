@@ -6,24 +6,69 @@ mod state;
 mod types;
 
 use axum::{
+    body::Body,
+    extract::Path,
+    http::{header, StatusCode},
     middleware,
+    response::Response,
     routing::{get, post, put},
     Router,
 };
+use rust_embed::RustEmbed;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::{
     cors::{Any, CorsLayer},
-    services::ServeDir,
     trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     auth::auth_middleware,
-    routes::{config as config_routes, keys as keys_routes, logs as logs_routes, models as models_routes, proxies as proxies_routes, sse as sse_routes},
+    routes::{
+        config as config_routes, keys as keys_routes, logs as logs_routes,
+        models as models_routes, proxies as proxies_routes, sse as sse_routes,
+    },
     state::{AppState, ServerConfig},
 };
+
+#[derive(RustEmbed)]
+#[folder = "static/"]
+struct StaticAssets;
+
+async fn serve_embedded(path: Option<Path<String>>) -> Response<Body> {
+    let path = path.map(|p| p.0).unwrap_or_default();
+    let path = if path.is_empty() || path == "/" {
+        "index.html".to_string()
+    } else {
+        path.trim_start_matches('/').to_string()
+    };
+
+    match StaticAssets::get(&path) {
+        Some(content) => {
+            let mime = mime_guess::from_path(&path).first_or_octet_stream();
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, mime.as_ref())
+                .body(Body::from(content.data.into_owned()))
+                .unwrap()
+        }
+        None => {
+            // SPA fallback: 返回 index.html
+            match StaticAssets::get("index.html") {
+                Some(content) => Response::builder()
+                    .status(StatusCode::OK)
+                    .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+                    .body(Body::from(content.data.into_owned()))
+                    .unwrap(),
+                None => Response::builder()
+                    .status(StatusCode::NOT_FOUND)
+                    .body(Body::from("404 Not Found"))
+                    .unwrap(),
+            }
+        }
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -72,18 +117,12 @@ async fn main() {
         .route("/api/proxies/test-all", post(proxies_routes::test_all_proxies))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
 
-    // 静态文件目录：优先使用 exe 所在目录下的 static/，回退到当前目录
-    let static_dir = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.join("static")))
-        .filter(|p| p.exists())
-        .unwrap_or_else(|| std::path::PathBuf::from("static"));
-
     let app = Router::new()
         .route("/health", get(health))
         .merge(api_routes)
-        // 静态文件服务（Vue UI）
-        .fallback_service(ServeDir::new(static_dir).append_index_html_on_directories(true))
+        // 静态文件（嵌入到 exe 内）
+        .route("/", get(|| serve_embedded(None)))
+        .route("/*path", get(|p: Path<String>| serve_embedded(Some(p))))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state);

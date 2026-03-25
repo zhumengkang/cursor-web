@@ -21,3 +21,5 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"
 tokio-util = "0.7"
 reqwest = { version = "0.12", features = ["socks"] }
+rust-embed = { version = "8", features = ["axum"] }
+mime_guess = "2"
