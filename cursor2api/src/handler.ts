@@ -80,18 +80,40 @@ export function extractThinking(text: string): { thinkingContent: string; stripp
 
 // ==================== 模型列表 ====================
 
+const SUPPORTED_MODELS = [
+    'anthropic/claude-sonnet-4.6',
+    'anthropic/claude-opus-4.6',
+    'anthropic/claude-sonnet-4.5',
+    'anthropic/claude-opus-4.5',
+    'anthropic/claude-haiku-4.5',
+    'anthropic/claude-3-7-sonnet',
+    'anthropic/claude-3-5-sonnet',
+    'anthropic/claude-3-5-haiku',
+    'anthropic/claude-3-opus',
+    'openai/gpt-4o',
+    'openai/gpt-4o-mini',
+    'openai/gpt-4.1',
+    'openai/gpt-4.1-mini',
+    'openai/o3',
+    'openai/o4-mini',
+    'google/gemini-2.5-pro',
+    'google/gemini-2.5-flash',
+    'google/gemini-2.0-flash',
+    'xai/grok-3',
+    'xai/grok-3-mini',
+    'deepseek/deepseek-r2',
+    'deepseek/deepseek-v3',
+    // Cursor IDE 推荐使用以下 Claude 模型名（避免走 /v1/responses 格式）
+    'claude-sonnet-4-5-20250929',
+    'claude-sonnet-4-20250514',
+    'claude-3-5-sonnet-20241022',
+];
+
 export function listModels(_req: Request, res: Response): void {
-    const model = getConfig().cursorModel;
     const now = Math.floor(Date.now() / 1000);
     res.json({
         object: 'list',
-        data: [
-            { id: model, object: 'model', created: now, owned_by: 'anthropic' },
-            // Cursor IDE 推荐使用以下 Claude 模型名（避免走 /v1/responses 格式）
-            { id: 'claude-sonnet-4-5-20250929', object: 'model', created: now, owned_by: 'anthropic' },
-            { id: 'claude-sonnet-4-20250514', object: 'model', created: now, owned_by: 'anthropic' },
-            { id: 'claude-3-5-sonnet-20241022', object: 'model', created: now, owned_by: 'anthropic' },
-        ],
+        data: SUPPORTED_MODELS.map(id => ({ id, object: 'model', created: now, owned_by: 'anthropic' })),
     });
 }
 
