@@ -85,6 +85,21 @@ async fn main() {
         .ok()
         .and_then(|p| p.parent().map(|d| d.to_path_buf()))
         .unwrap_or_else(|| std::path::PathBuf::from("."));
+
+    // 首次运行：自动生成默认 config.yaml
+    let config_path = std::env::var("CONFIG_PATH")
+        .unwrap_or_else(|_| exe_dir.join("config.yaml").to_string_lossy().to_string());
+    if !std::path::Path::new(&config_path).exists() {
+        let default_config = include_str!("../../cursor2api/config.yaml.example");
+        if let Some(parent) = std::path::Path::new(&config_path).parent() {
+            std::fs::create_dir_all(parent).ok();
+        }
+        match std::fs::write(&config_path, default_config) {
+            Ok(_) => tracing::info!("已生成默认配置文件: {}", config_path),
+            Err(e) => tracing::warn!("生成默认配置文件失败: {}", e),
+        }
+    }
+
     let _node_child = node_service::setup_and_spawn(&exe_dir);
 
     // 等待 Node.js 启动
