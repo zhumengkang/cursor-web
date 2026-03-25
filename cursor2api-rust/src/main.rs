@@ -72,11 +72,18 @@ async fn main() {
         .route("/api/proxies/test-all", post(proxies_routes::test_all_proxies))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
 
+    // 静态文件目录：优先使用 exe 所在目录下的 static/，回退到当前目录
+    let static_dir = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join("static")))
+        .filter(|p| p.exists())
+        .unwrap_or_else(|| std::path::PathBuf::from("static"));
+
     let app = Router::new()
         .route("/health", get(health))
         .merge(api_routes)
         // 静态文件服务（Vue UI）
-        .fallback_service(ServeDir::new("static").append_index_html_on_directories(true))
+        .fallback_service(ServeDir::new(static_dir).append_index_html_on_directories(true))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state);
