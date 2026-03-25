@@ -1,13 +1,8 @@
 # Rust build artifacts
 cursor2api-rust/target/
 
-# Node.js
-node_modules/
-cursor2api/node_modules/
-cursor2api/vue-ui/node_modules/
-
-# Vue build (static files managed separately)
-cursor2api/public/vue/
+# cursor2api 源码目录（本地参考，不推送）
+cursor2api/
 
 # Misc
 .DS_Store
