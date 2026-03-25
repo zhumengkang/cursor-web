@@ -7,7 +7,7 @@ mod types;
 
 use axum::{
     middleware,
-    routing::{get, post},
+    routing::{get, post, put},
     Router,
 };
 use std::sync::Arc;
@@ -21,7 +21,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     auth::auth_middleware,
-    routes::{config as config_routes, logs as logs_routes, models as models_routes, sse as sse_routes},
+    routes::{config as config_routes, keys as keys_routes, logs as logs_routes, models as models_routes, proxies as proxies_routes, sse as sse_routes},
     state::{AppState, ServerConfig},
 };
 
@@ -38,7 +38,6 @@ async fn main() {
     let port = server_config.port;
     let log_dir = server_config.log_dir.clone();
     let db_path = server_config.db_path.clone();
-
     let (sse_tx, _) = broadcast::channel::<String>(256);
 
     // 启动文件监听
@@ -65,6 +64,12 @@ async fn main() {
         .route("/api/requests/more", get(logs_routes::get_requests_more))
         .route("/api/vue/stats", get(logs_routes::get_stats))
         .route("/api/payload/:request_id", get(logs_routes::get_payload))
+        .route("/api/keys/stats", get(keys_routes::get_key_stats))
+        .route("/api/keys", get(keys_routes::get_keys).post(keys_routes::post_key))
+        .route("/api/keys/:id", put(keys_routes::put_key).delete(keys_routes::delete_key))
+        .route("/api/proxies", get(proxies_routes::get_proxies).post(proxies_routes::set_proxies))
+        .route("/api/proxies/test", post(proxies_routes::test_proxy))
+        .route("/api/proxies/test-all", post(proxies_routes::test_all_proxies))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
 
     let app = Router::new()

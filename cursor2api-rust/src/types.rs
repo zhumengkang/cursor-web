@@ -60,6 +60,8 @@ pub struct HotConfig {
     pub port: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proxy: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proxies: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,6 +136,8 @@ pub struct RequestSummary {
     pub output_tokens: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    #[serde(rename = "authToken", skip_serializing_if = "Option::is_none")]
+    pub auth_token: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -175,6 +179,73 @@ pub struct RequestsPage {
     pub has_more: bool,
     #[serde(rename = "nextCursor", skip_serializing_if = "Option::is_none")]
     pub next_cursor: Option<String>,
+}
+
+// ==================== API Keys ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiKey {
+    pub id: String,
+    pub name: String,
+    pub key_preview: String,
+    pub note: Option<String>,
+    pub enabled: bool,
+    pub created_at: i64,
+    pub last_used: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateKeyRequest {
+    pub name: String,
+    pub key_value: String,
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateKeyRequest {
+    pub name: String,
+    pub note: Option<String>,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelBreakdown {
+    pub model: String,
+    pub count: u64,
+    pub input_tokens: u64,
+    pub output_tokens: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct DailyBreakdown {
+    pub date: String,
+    pub count: u64,
+    pub input_tokens: u64,
+    pub output_tokens: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct KeyStats {
+    pub total_requests: u64,
+    pub success_count: u64,
+    pub error_count: u64,
+    pub degraded_count: u64,
+    pub success_rate: f64,
+    pub total_input_tokens: u64,
+    pub total_output_tokens: u64,
+    pub total_tokens: u64,
+    pub avg_input_tokens: f64,
+    pub avg_output_tokens: f64,
+    pub avg_response_time: f64,
+    pub models_breakdown: Vec<ModelBreakdown>,
+    pub period_breakdown: Vec<DailyBreakdown>,
+    pub granularity: String,
 }
 
 // ==================== 应用状态 ====================

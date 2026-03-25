@@ -6,6 +6,7 @@ pub struct ServerConfig {
     pub config_path: String,
     pub db_path: String,
     pub log_dir: String,
+    pub keys_db_path: String,
     pub auth_tokens: Vec<String>,
 }
 
@@ -17,6 +18,8 @@ impl ServerConfig {
             .unwrap_or_else(|_| "../cursor2api/logs/cursor2api.db".to_string());
         let log_dir = std::env::var("LOG_DIR")
             .unwrap_or_else(|_| "../cursor2api/logs".to_string());
+        let keys_db_path = std::env::var("KEYS_DB_PATH")
+            .unwrap_or_else(|_| "./keys.db".to_string());
         let port = std::env::var("PORT")
             .ok()
             .and_then(|p| p.parse().ok())
@@ -29,6 +32,7 @@ impl ServerConfig {
             config_path,
             db_path,
             log_dir,
+            keys_db_path,
             auth_tokens,
         }
     }
