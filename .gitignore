@@ -1,8 +1,6 @@
 # Rust build artifacts
 cursor2api-rust/target/
 
-# cursor2api 源码目录（本地参考，不推送）
-cursor2api/
 
 # Misc
 .DS_Store

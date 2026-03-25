@@ -1,0 +1,8 @@
+node_modules/
+dist/
+logs/
+config.yaml
+public/vue/
+*.db
+.env
+.env.local
